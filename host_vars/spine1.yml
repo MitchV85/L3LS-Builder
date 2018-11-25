@@ -8,10 +8,12 @@ interfaces:
     shutdown: no
     ospf: yes
     area: 0.0.0.0
+
   - name: Ethernet1
     mode: l2access
     desc: Not in Use
     shutdown: yes
+
   - name: Ethernet2
     mode: routed
     ip: 172.16.200.1/30
@@ -20,6 +22,7 @@ interfaces:
     area: 0.0.0.0
     ospfnet: point-to-point
     shutdown: no
+
   - name: Ethernet3
     mode: routed
     ip: 172.16.200.5/30
@@ -28,6 +31,7 @@ interfaces:
     area: 0.0.0.0
     ospfnet: point-to-point
     shutdown: no
+
   - name: Ethernet4
     mode: routed
     ip: 172.16.200.9/30
@@ -36,6 +40,7 @@ interfaces:
     area: 0.0.0.0
     ospfnet: point-to-point
     shutdown: no
+
   - name: Ethernet5
     mode: routed
     ip: 172.16.200.13/30
