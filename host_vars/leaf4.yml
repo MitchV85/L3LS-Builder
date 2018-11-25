@@ -1,4 +1,6 @@
-nterfaces:
+deviceid: 6
+
+interfaces:
   - name: Loopback0
     mode: loopback
     ip: 172.16.0.{{ deviceid }}/32
