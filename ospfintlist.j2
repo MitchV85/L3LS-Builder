@@ -1,0 +1,7 @@
+{%- set foo = [] -%}
+{%- for int in hostvars[inventory_hostname].interfaces -%}
+{%- if int.ospf is defined -%}
+{{ foo.append(int.name) }}
+{%- endif -%}
+{%- endfor -%}
+{{ foo | list }}

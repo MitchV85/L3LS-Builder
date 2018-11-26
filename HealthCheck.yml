@@ -36,6 +36,31 @@
             - "{{ ospfneigh_count | int >= ospfadjcount }}"
           fail_msg: "{{ inventory_hostname }} only has {{ ospfneigh_count }} neighbors. It should have {{ ospfadjcount }}!"
        
+      - name: Task 4 - Capture list of interfaces that have OSPF enabled
+        tags: ospfintcount
+        eos_command:
+          commands:
+            - show ip ospf interface brief | json
+        register: ospfints
+
+      - name: Task 5 - Setting Fact - Actual OSPF Interface List
+        tags: ospfintcount
+        set_fact:
+          ospfints_actual: "{{ ospfints.stdout[0].vrfs.default.instList['100'].interfaces }}"
+
+      - name: Task 6 - Set fact of list of expected OSPF Interfaces
+        tags: ospfintcount
+        set_fact:
+          ospfints_expected: "{{ lookup('template', './ospfintlist.j2') }}"
+
+      - name: Task 7 - Valide that Expected OSPF Interfaces Matches Actual OSPF Interfaces
+        tags: ospfintcount
+        assert:
+          that: "{{ item }} in {{ ospfints_actual }}"
+          fail_msg: "{{ inventory_hostname }} is missing one, or more, interfaces from its OSPF interface list }}"
+        with_items: 
+          - "{{ ospfints_expected }}"
+
       rescue:
         - name: Send a Slack Message reporting the failure!
           slack:
