@@ -46,7 +46,7 @@
       - name: Task 5 - Setting Fact - Actual OSPF Interface List
         tags: ospfintcount
         set_fact:
-          ospfints_actual: "{{ ospfints.stdout[0].vrfs.default.instList['100'].interfaces }}"
+          ospfints_actual: "{{ ospfints.stdout[0].vrfs.default.instList['100'].interfaces | list }}"
 
       - name: Task 6 - Set fact of list of expected OSPF Interfaces
         tags: ospfintcount
@@ -56,8 +56,8 @@
       - name: Task 7 - Valide that Expected OSPF Interfaces Matches Actual OSPF Interfaces
         tags: ospfintcount
         assert:
-          that: "{{ item }} in {{ ospfints_actual }}"
-          fail_msg: "{{ inventory_hostname }} is missing one, or more, interfaces from its OSPF interface list }}"
+          that: "'{{ item}}' in ospfints.stdout[0].vrfs.default.instList['100'].interfaces"
+          fail_msg: "{{ inventory_hostname }} Does not have the list of active OSPF interfaces that we expected."
         with_items: 
           - "{{ ospfints_expected }}"
 
