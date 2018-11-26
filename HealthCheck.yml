@@ -1,0 +1,55 @@
+---
+
+- name: L3LS Health Check
+  hosts: all
+  gather_facts: no
+  connection: local
+
+  tasks:
+
+    - name: Set Date Stamp
+      set_fact: date="{{lookup('pipe','date +%Y%m%d')}}"
+      tags: date_stamp
+      run_once: true
+
+    - name: Set Time Stamp
+      set_fact: time="{{lookup('pipe','date +%Y%m%d%H%M%S')}}"
+      tags: time_stamp
+      run_once: true
+
+    - name: Part 1 - Validate OSPF Health
+      block:
+
+      - name: Task 1 - Capture current list of OSPF Neighbors
+        eos_command:
+          commands:
+            - show ip ospf neighbor | json
+        register: ospfneighbors
+  
+      - name: Task 2 - Setting Fact - OSPF Neighbor Count
+        set_fact:
+          ospfneigh_count: "{{ ospfneighbors.stdout[0].vrfs.default.instList['100'].ospfNeighborEntries | length }}"
+  
+      - name: Task 3 - Validate that all expectected OSPF Neighbors are in place
+        assert:
+          that:
+            - "{{ ospfneigh_count | int >= ospfadjcount }}"
+          fail_msg: "{{ inventory_hostname }} only has {{ ospfneigh_count }} neighbors. It should have {{ ospfadjcount }}!"
+       
+      rescue:
+        - name: Send a Slack Message reporting the failure!
+          slack:
+            token: T9E1Z68H3/BC10PAM42/9jtmxAXW4LeGLuD7pABgMvr5
+            msg: "{{ inventory_hostname }} failed the OSPF Health Check.\nIt failed on task: {{ ansible_failed_task.name }}\n The error message was: {{ ansible_failed_task.args.fail_msg }}"
+            color: danger
+          delegate_to: localhost
+       
+
+
+
+
+
+ 
+#    - name: Testing
+#      debug:
+#        var: "{{ ospfneigh_count }}"
