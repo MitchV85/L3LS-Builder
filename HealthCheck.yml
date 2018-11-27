@@ -37,7 +37,8 @@
           that:
             - "{{ ospfneigh_count | int >= ospfadjcount }}"
           fail_msg: "{{ inventory_hostname }} only has {{ ospfneigh_count }} neighbors. It should have {{ ospfadjcount }}!"
-       
+
+ 
       - name: Task 4 - Capture list of interfaces that have OSPF enabled
         tags: ospfintcount
         eos_command:
@@ -50,21 +51,34 @@
         set_fact:
           ospfints_expected: "{{ lookup('template', './ospfintlist.j2') }}"
 
-      - name: Task 6 - Validate that Expected OSPF Interfaces Matches Actual OSPF Interfaces
+      - name: Task 6 - Set Fact - List of actual OSPF interfaces
+        tags: ospfintcount
+        set_fact:
+          ospfints_actual: "{{ ospfints.stdout[0].vrfs.default.instList['100'].interfaces | list }}"
+
+      - name: Task 7 - Validate that all expected interfaces are running OSPF
         tags: ospfintcount
         assert:
-          that: "'{{ item }}' in ospfints.stdout[0].vrfs.default.instList['100'].interfaces"
+          that:
+            - "'{{ item }}' in ospfints.stdout[0].vrfs.default.instList['100'].interfaces"
           fail_msg: "{{ inventory_hostname }} Does not have the list of active OSPF interfaces that we expected."
         with_items: 
           - "{{ ospfints_expected }}"
-
-
+      
+      - name: Task 8 - Check for any interfaces running OSPF that should not be
+        tags: ospfintcount
+        assert:
+          that:
+            - "'{{ item }}' in ospfints_expected"
+          fail_msg: "{{ inventory_hostname }} has interfaces running OSPF that we did not expect."
+        with_items:
+          - "{{ ospfints_actual }}"
 
       rescue:
         - name: Send a Slack Message reporting the failure
           slack:
             token: T9E1Z68H3/BC10PAM42/9jtmxAXW4LeGLuD7pABgMvr5
-            msg: "{{ inventory_hostname }} failed the OSPF Health Check.\nIt failed on task: {{ ansible_failed_task.name }}\n The error message was: {{ ansible_failed_task.args.fail_msg }}"
+            msg: "*{{ inventory_hostname }} failed the OSPF Health Check.*\n\n *It failed on task:* {{ ansible_failed_task.name }}\n\n*The error message was:* {{ ansible_failed_task.args.fail_msg }}"
             color: danger
           delegate_to: localhost
        
