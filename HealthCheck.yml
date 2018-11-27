@@ -91,18 +91,18 @@
 
       - name: Task 11 - Validate that the OSPF database summary is consistent within the area
         tags: ospfdb
-        debug: 
-          var: ospfdbsum_truth.stdout[0].vrfs.default.instList['100']
-        run_once: true
+        assert:
+          that: " ospfdbsum_truth.stdout[0].vrfs.default.instList['100'] == ospfdbsum_node.
+stdout[0].vrfs.default.instList['100'] "
+          fail_msg: "The LSDB (OSPF Database) is not consistent on all nodes in Area 0"
 
       rescue:
         - name: Send a Slack Message reporting the failure
           slack:
             token: T9E1Z68H3/BC10PAM42/9jtmxAXW4LeGLuD7pABgMvr5
-            msg: "*{{ inventory_hostname }} failed the OSPF Health Check.*\n\n *It failed on task:* {{ ansible_failed_task.name }}\n\n*The error message was:* {{ ansible_failed_task.args.fail_msg }}"
+            msg: "*{{ inventory_hostname }} failed the OSPF Health Check.*\n\n *It failed on task:* {{ ansible_failed_task.name }}\n\n*The error message was:* {{ ansible_failed_task.args.fail_msg }}."
             color: danger
           delegate_to: localhost
-       
 
 
 
