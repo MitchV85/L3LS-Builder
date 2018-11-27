@@ -40,24 +40,24 @@
 
  
       - name: Task 4 - Capture list of interfaces that have OSPF enabled
-        tags: ospfintcount
+        tags: ospfint
         eos_command:
           commands:
             - show ip ospf interface brief | json
         register: ospfints
 
       - name: Task 5 - Set fact - List of expected OSPF Interfaces
-        tags: ospfintcount
+        tags: ospfint
         set_fact:
           ospfints_expected: "{{ lookup('template', './ospfintlist.j2') }}"
 
       - name: Task 6 - Set Fact - List of actual OSPF interfaces
-        tags: ospfintcount
+        tags: ospfint
         set_fact:
           ospfints_actual: "{{ ospfints.stdout[0].vrfs.default.instList['100'].interfaces | list }}"
 
       - name: Task 7 - Validate that all expected interfaces are running OSPF
-        tags: ospfintcount
+        tags: ospfint
         assert:
           that:
             - "'{{ item }}' in ospfints.stdout[0].vrfs.default.instList['100'].interfaces"
@@ -66,13 +66,36 @@
           - "{{ ospfints_expected }}"
       
       - name: Task 8 - Check for any interfaces running OSPF that should not be
-        tags: ospfintcount
+        tags: ospfint
         assert:
           that:
             - "'{{ item }}' in ospfints_expected"
           fail_msg: "{{ inventory_hostname }} has interfaces running OSPF that we did not expect."
         with_items:
           - "{{ ospfints_actual }}"
+
+      - name: Task 9 - Capture OSPF database summary for the area from any node
+        tags: ospfdb
+        eos_command:
+          commands:
+            - show ip ospf database database-summary | json
+        register: ospfdbsum_truth
+        run_once: true
+
+      - name: Task 10 - Capture the OSPF database summary from every node within the area
+        tags: ospfdb
+        eos_command:
+          commands:
+            - show ip ospf database database-summary | json
+        register: ospfdbsum_node
+
+#      - name: Task 11 - Validate that the OSPF database summary is consistent within the area
+#        tags: ospfdb
+#       assert:
+#         that: "{{ item.key }} == {{ ospfdbsum_truth.stdout[0].vrfs.default.instList['100'].{{ item }} }}"
+#         fail_msg: "{{ inventory_hostname }} has an inconsistent OSPF database for Area 0"
+#       with_dict: "{{ ospfdbsum_node.stdout[0].vrfs.default.instList['100'] }}"
+
 
       rescue:
         - name: Send a Slack Message reporting the failure
@@ -82,7 +105,6 @@
             color: danger
           delegate_to: localhost
        
-
 
 
 
