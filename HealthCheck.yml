@@ -89,13 +89,11 @@
             - show ip ospf database database-summary | json
         register: ospfdbsum_node
 
-#      - name: Task 11 - Validate that the OSPF database summary is consistent within the area
-#        tags: ospfdb
-#       assert:
-#         that: "{{ item.key }} == {{ ospfdbsum_truth.stdout[0].vrfs.default.instList['100'].{{ item }} }}"
-#         fail_msg: "{{ inventory_hostname }} has an inconsistent OSPF database for Area 0"
-#       with_dict: "{{ ospfdbsum_node.stdout[0].vrfs.default.instList['100'] }}"
-
+      - name: Task 11 - Validate that the OSPF database summary is consistent within the area
+        tags: ospfdb
+        debug: 
+          var: ospfdbsum_truth.stdout[0].vrfs.default.instList['100']
+        run_once: true
 
       rescue:
         - name: Send a Slack Message reporting the failure
