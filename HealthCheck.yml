@@ -6,6 +6,8 @@
   connection: local
   vars:
      item: "foo"
+  vars_files:
+     - ./pinghosts.yml
 
   tasks:
 
@@ -105,9 +107,56 @@ stdout[0].vrfs.default.instList['100'] "
           delegate_to: localhost
 
 
-
-
+    - name: Part 2 - Validate Connectivity via Pings
+      tags: ping
+      block:
  
-#    - name: Testing
-#      debug:
-#        var: "{{ ospfneigh_count }}"
+      - name: Ping the hosts
+        tags: ping
+        eos_command:
+          commands:
+            - "ping {{ item }}"
+        with_items: "{{ pinghosts }}"
+        register: pingresult
+
+      - name: testing
+        tags: ping
+        debug:
+          var: pingresult
+    
+      - name: Get length of Ping Result output
+        tags: ping
+        set_fact:
+          totalpings: "{{ pingresult.results | length }}"
+    
+      - name: Set Fact - Ping Result output length converted to integer
+        tags: ping
+        set_fact:
+          totalpingsint: "{{ totalpings | int - 1 }}"
+    
+      - name: Create list of ping iterations
+        tags: ping
+        set_fact:
+          foo: "{{ foo | default([]) + [item | int] }}"
+        with_sequence: "start=0 end={{totalpingsint}} stride=1"
+    
+      - name: Validate Ping Results
+        tags: ping
+        assert:
+          that:
+            - "'{{item.0}}' in pingresult.results[{{item.1}}].stdout[0]"
+            - "'0% packet loss' in pingresult.results[{{item.1}}].stdout[0]"
+          fail_msg: "{{ inventory_hostname }} was not able to successfully ping all hosts"
+        with_together:
+          - "{{ pinghosts }}"
+          - "{{ foo }}"
+
+      rescue:
+        - name: Send a Slack Message reporting the failure
+          tags: ping
+          slack:
+            token: T9E1Z68H3/BC10PAM42/9jtmxAXW4LeGLuD7pABgMvr5
+            msg: "*{{ inventory_hostname }} failed the Health Check.*\n\n *It failed on task:* {{ ansible_failed_task.name }}\n\n*The
+ error message was:* {{ ansible_failed_task.args.fail_msg }}."
+            color: danger
+          delegate_to: localhost

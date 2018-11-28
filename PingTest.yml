@@ -9,30 +9,31 @@
 
   tasks:
     - name: Ping the hosts
+      tags: ping
       eos_command:
         commands:
           - "ping {{ item }}"
       with_items: "{{ pinghosts }}"
       register: pingresult
 
-    - name: Get length of pingresult
+    - name: Get length of Ping Result output
+      tags: ping
       set_fact:
         totalpings: "{{ pingresult.results | length }}"
 
-    - name: Set test fact
+    - name: Set Fact - Ping Result output length converted to integer
+      tags: ping
       set_fact:
         totalpingsint: "{{ totalpings | int - 1 }}"
 
-    - name: Debug output
-      debug:
-        var: totalpingsint
-
     - name: Create list of ping iterations
+      tags: ping
       set_fact:
         foo: "{{ foo | default([]) + [item | int] }}"
       with_sequence: "start=0 end={{totalpingsint}} stride=1"
 
-    - name: Validate output
+    - name: Validate Ping Results
+      tags: ping
       assert:
         that:
           - "'{{item.0}}' in pingresult.results[{{item.1}}].stdout[0]"
