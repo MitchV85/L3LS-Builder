@@ -34,7 +34,9 @@
 
     - name: Validate output
       assert:
-        that: "'{{item.0}}' in pingresult.results[{{item.1}}].stdout[0]"
+        that:
+          - "'{{item.0}}' in pingresult.results[{{item.1}}].stdout[0]"
+          - "' 0% packet loss' in pingresult.results[{{item.1}}].stdout[0]"
         fail_msg: "nope, not there"
       with_together:
         - "{{ pinghosts }}"
