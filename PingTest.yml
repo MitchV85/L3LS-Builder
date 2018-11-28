@@ -1,0 +1,41 @@
+---
+
+- name: Ping sweep play
+  hosts: all
+  connection: local
+  vars_files:
+    - ./pinghosts.yml
+  
+
+  tasks:
+    - name: Ping the hosts
+      eos_command:
+        commands:
+          - "ping {{ item }}"
+      with_items: "{{ pinghosts }}"
+      register: pingresult
+
+    - name: Get length of pingresult
+      set_fact:
+        totalpings: "{{ pingresult.results | length }}"
+
+    - name: Set test fact
+      set_fact:
+        totalpingsint: "{{ totalpings | int - 1 }}"
+
+    - name: Debug output
+      debug:
+        var: totalpingsint
+
+    - name: Create list of ping iterations
+      set_fact:
+        foo: "{{ foo | default([]) + [item | int] }}"
+      with_sequence: "start=0 end={{totalpingsint}} stride=1"
+
+    - name: Validate output
+      assert:
+        that: "'{{item.0}}' in pingresult.results[{{item.1}}].stdout[0]"
+        fail_msg: "nope, not there"
+      with_together:
+        - "{{ pinghosts }}"
+        - "{{ foo }}"
