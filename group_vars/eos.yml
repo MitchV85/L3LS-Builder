@@ -1,12 +1,10 @@
+ansible_user: arista
+ansible_password: arista
 ansible_network_os: eos
+ansible_connection: httpapi
+ansible_become: true
+ansible_become_method: enable
 
-provider:
-  host: "{{ ansible_host }}"
-  username: arista
-  password: arista
-  authorize: yes
-  transport: eapi
-  validate_certs: no
 
 domain_name: atd.local
 dns_server: 192.168.0.4
